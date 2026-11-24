@@ -1,0 +1,10 @@
+.buildResult/
+public/
+*.sqlite*
+*.wgt
+*.zip
+__pycache__/
+service/pairing-key.json
+service/pairing-key.js
+service/transport-connection.json
+service/github-pages.json
