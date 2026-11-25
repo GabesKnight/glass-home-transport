@@ -3,20 +3,25 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '17 18 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'hub/**'
+      - 'tools/publish-gtfs.py'
+      - 'mac-transport/server.py'
+      - '.github/workflows/timetables.yml'
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 concurrency:
   group: timetable-pages
   cancel-in-progress: false
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,8 +29,33 @@ jobs:
           python-version: '3.12'
       - uses: actions/configure-pages@v5
       - run: python tools/publish-gtfs.py --out public
+      - run: test -s public/hub.html && test -s public/catalog.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
+          retention-days: 3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Wait for Pages artifact to become visible
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for attempt in $(seq 1 30); do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --paginate --jq '.artifacts[] | select(.name == "github-pages" and .expired == false) | .id' | grep -q '[0-9]'; then
+              echo "Pages artifact available"
+              exit 0
+            fi
+            echo "Waiting for artifact metadata ($attempt/30)"
+            sleep 10
+          done
+          echo "::error::Uploaded Pages artifact did not become visible"
+          exit 1
       - uses: actions/deploy-pages@v4
         id: deployment
