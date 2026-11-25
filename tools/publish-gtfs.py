@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build compact, route-scoped static GTFS data for GitHub Pages."""
-import argparse, datetime as dt, hashlib, importlib.util, itertools, json, pathlib, sqlite3, tempfile, re
+import shutil, argparse, datetime as dt, hashlib, importlib.util, itertools, json, pathlib, sqlite3, tempfile, re
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('gtfs',ROOT/'mac-transport/server.py'); gtfs=importlib.util.module_from_spec(spec);spec.loader.exec_module(gtfs)
 def dump(path,obj):
@@ -31,6 +31,7 @@ def export(db,out):
     dump(out/'catalog.json',{'version':1,'updated':updated,'routes':routes,'stops':list(stop_index.values())});total+= (out/'catalog.json').stat().st_size
     dump(out/'status.json',{'updated':updated,'databaseBytes':total,'refreshing':False,'routes':len(routes),'stops':len(stop_index)})
     (out/'.nojekyll').touch();(out/'index.html').write_text('<!doctype html><meta charset="utf-8"><title>Glass Home Transport</title><h1>Glass Home Transport</h1><p>Scheduled Victorian public transport data. <a href="https://opendata.transport.vic.gov.au/dataset/gtfs-schedule">Source: State of Victoria (Department of Transport and Planning), GTFS Schedule</a>. Modified into route-specific timetable files under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Unofficial personal project. <a href="status.json">Dataset status</a></p>',encoding='utf8')
+    shutil.copyfile(ROOT/'hub/index.html',out/'hub.html')
     if total>900_000_000:raise ValueError(f'Pages data exceeds safe size budget: {total} bytes')
     print(f'Published {len(routes)} routes, {len(stop_index)} stops, {total:,} bytes',flush=True);c.close()
 if __name__=='__main__':
