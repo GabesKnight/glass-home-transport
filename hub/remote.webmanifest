@@ -1,0 +1,1 @@
+{"name":"GlassHome Remote","short_name":"GlassHome","start_url":"remote.html","scope":"./","display":"standalone","background_color":"#0c1b26","theme_color":"#0c1b26","icons":[{"src":"remote-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
