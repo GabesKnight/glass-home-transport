@@ -1,0 +1,1 @@
+self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.mode==='navigate'&&new URL(e.request.url).pathname.endsWith('/remote.html'))e.respondWith(fetch(e.request));});
